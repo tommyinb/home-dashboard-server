@@ -3,8 +3,7 @@ import { storage } from "firebase-admin";
 export async function gansoCheck() {
   const newVacancies = await fetchVacancies();
 
-  const oldData = await downloadData();
-  await uploadData(newVacancies, oldData);
+  await updateData(newVacancies);
 
   return {
     newVacancies,
@@ -67,19 +66,13 @@ interface Vacancy {
 
 const filePath = "watches/ganso.json";
 
-async function downloadData() {
+async function updateData(newVacancies: Vacancy[]) {
   const bucket = storage().bucket();
   const file = bucket.file(filePath);
 
   const [buffer] = await file.download();
-  const text = buffer.toString("utf-8");
-
-  return JSON.parse(text) as SaveData;
-}
-
-async function uploadData(newVacancies: Vacancy[], oldData: SaveData) {
-  const bucket = storage().bucket();
-  const file = bucket.file(filePath);
+  const oldText = buffer.toString("utf-8");
+  const oldData = JSON.parse(oldText) as SaveData;
 
   const newItems = newVacancies.map((newVacancy) => {
     const newDate = newVacancy.date.toLocaleDateString("en-CA");
